@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0C2D5E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BM Manutentions">
+<link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;BM Manutentions&quot;,&quot;short_name&quot;:&quot;BM&quot;,&quot;start_url&quot;:&quot;https://yassineboutahir64.github.io/bm-app/&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;%230C2D5E&quot;,&quot;theme_color&quot;:&quot;%230C2D5E&quot;,&quot;icons&quot;:[{&quot;src&quot;:&quot;https://yassineboutahir64.github.io/bm-app/icon.png&quot;,&quot;sizes&quot;:&quot;192x192&quot;,&quot;type&quot;:&quot;image/png&quot;}]}">
+<title>BM Manutentions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script>
+<script>
+function renderQR(containerId, text) {
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  try {
+    var qr = qrcode(0, 'M');
+    qr.addData(text);
+    qr.make();
+    var moduleCount = qr.getModuleCount();
+    var cellSize = Math.floor(200 / moduleCount);
+    var size = cellSize * moduleCount;
+    var canvas = document.createElement('canvas');
+    canvas.width = size + 16;
+    canvas.height = size + 16;
+    canvas.style.display = 'block';
+    canvas.style.margin = '0 auto';
+    canvas.style.borderRadius = '8px';
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#0C2D5E';
+    for (var row = 0; row < moduleCount; row++) {
+      for (var col = 0; col < moduleCount; col++) {
+        if (qr.isDark(row, col)) {
+          ctx.fillRect(8 + col * cellSize, 8 + row * cellSize, cellSize, cellSize);
+        }
+      }
+    }
+    el.innerHTML = '';
+    el.appendChild(canvas);
+  } catch(e) {
+    el.innerHTML = '<div style="background:#fff;border:2px solid #0C2D5E;border-radius:8px;padding:20px;text-align:center;"><div style="font-size:11px;color:#888;margin-bottom:8px;">Montrez ce numéro au pointeur magasin</div><div style="font-family:monospace;font-size:24px;font-weight:700;color:#0C2D5E;letter-spacing:3px;">' + text + '</div></div>';
+  }
+}
+
+
+</script>
+<style>
+:root {
+  --blue-dark: #0C2D5E;
+  --blue-mid: #185FA5;
+  --blue-light: #E6F1FB;
+  --green-dark: #085041;
+  --green-mid: #1D9E75;
+  --green-light: #E1F5EE;
+  --red-dark: #791F1F;
+  --red-mid: #A32D2D;
+  --red-light: #FCEBEB;
+  --amber-dark: #412402;
+  --amber-mid: #854F0B;
+  --amber-light: #FAEEDA;
+  --gray-bg: #F4F2EC;
+  --gray-card: #FFFFFF;
+  --gray-surface: #ECEAE3;
+  --gray-border: rgba(0,0,0,0.1);
+  --gray-text: #444441;
+  --gray-muted: #888780;
+  --font-main: 'DM Sans', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: var(--font-main);
+  background: var(--gray-bg);
+  color: var(--gray-text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── NAVIGATION ── */
+.nav {
+  background: var(--blue-dark);
+  padding: 0;
+  display: flex;
+  align-items: stretch;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 12px rgba(12,45,94,0.18);
+}
+.nav-logo {
+  padding: 14px 16px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: #fff;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  border-right: 1px solid rgba(255,255,255,0.1);
+  white-space: nowrap;
+}
+.nav-tabs {
+  display: flex;
+  flex: 1;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.nav-tabs::-webkit-scrollbar { display: none; }
+.nav-tab {
+  padding: 14px 14px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.55);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: color 0.2s, border-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+.nav-tab.active { color: #fff; border-bottom-color: #378ADD; }
+.nav-tab:hover { color: rgba(255,255,255,0.85); }
+
+/* ── PAGES ── */
+.page { display: none; padding: 16px; max-width: 480px; margin: 0 auto; }
+.page.active { display: block; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--gray-card);
+  border-radius: var(--radius);
+  border: 0.5px solid var(--gray-border);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-text);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.card-title svg { flex-shrink: 0; }
+
+/* ── FORM ── */
+.field { margin-bottom: 12px; }
+.field label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray-muted);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.field input, .field select, .field textarea {
+  width: 100%;
+  background: var(--gray-bg);
+  border: 1px solid var(--gray-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: var(--font-main);
+  color: var(--gray-text);
+  outline: none;
+  transition: border-color 0.15s;
+  -webkit-appearance: none;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color: var(--blue-mid);
+  background: #fff;
+}
+.field-auto input, .field-auto select {
+  background: var(--blue-light);
+  border-color: #B5D4F4;
+  color: var(--blue-dark);
+  font-weight: 500;
+}
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.auto-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  color: var(--blue-mid);
+  background: var(--blue-light);
+  padding: 2px 7px;
+  border-radius: 99px;
+  margin-left: 6px;
+  font-weight: 500;
+}
+
+/* ── SHIFT SELECTOR ── */
+.shift-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.shift-btn {
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--gray-border);
+  background: var(--gray-bg);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-muted);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+  font-family: var(--font-main);
+}
+.shift-btn.active {
+  background: var(--blue-dark);
+  color: #fff;
+  border-color: var(--blue-dark);
+}
+
+/* ── BUTTONS ── */
+.btn {
+  width: 100%;
+  padding: 13px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-main);
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+.btn:active { transform: scale(0.98); opacity: 0.9; }
+.btn-primary { background: var(--blue-dark); color: #fff; margin-bottom: 8px; }
+.btn-success { background: var(--green-dark); color: #fff; margin-bottom: 8px; }
+.btn-danger { background: var(--red-mid); color: #fff; margin-bottom: 8px; }
+.btn-outline {
+  background: transparent;
+  color: var(--gray-muted);
+  border: 1px solid var(--gray-border);
+}
+
+/* ── PALANQUEE TABLE ── */
+.palan-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 10px; }
+.palan-table th {
+  background: var(--gray-surface);
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border-bottom: 1px solid var(--gray-border);
+}
+.palan-table td {
+  padding: 9px 10px;
+  border-bottom: 0.5px solid var(--gray-border);
+  color: var(--gray-text);
+  vertical-align: middle;
+}
+.palan-table tr:last-child td { border-bottom: none; }
+.palan-table input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  font-family: var(--font-main);
+  color: var(--gray-text);
+  outline: none;
+  padding: 0;
+}
+.palan-num {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--blue-mid);
+  font-weight: 500;
+}
+.add-row-btn {
+  width: 100%;
+  padding: 9px;
+  background: var(--gray-bg);
+  border: 1.5px dashed var(--gray-border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--gray-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: var(--font-main);
+  font-weight: 500;
+  margin-bottom: 10px;
+  transition: background 0.15s;
+}
+.add-row-btn:hover { background: var(--gray-surface); }
+
+/* ── STAT BADGES ── */
+.stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.stat-box {
+  background: var(--gray-bg);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+.stat-lbl { font-size: 10px; font-weight: 600; color: var(--gray-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 3px; }
+.stat-val { font-size: 20px; font-weight: 600; color: var(--gray-text); font-family: var(--font-mono); }
+
+/* ── SIGNATURE ZONE ── */
+.sig-zone {
+  border: 1.5px dashed var(--gray-border);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 10px;
+  background: var(--gray-bg);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.sig-zone.signed { background: var(--green-light); border-color: var(--green-mid); border-style: solid; }
+.sig-zone svg { margin-bottom: 6px; }
+.sig-label { font-size: 12px; color: var(--gray-muted); }
+.sig-label.done { color: var(--green-dark); font-weight: 600; }
+.sig-row-double { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+
+/* ── QR DISPLAY ── */
+.qr-container {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 12px;
+  border: 1px solid var(--gray-border);
+}
+.qr-number {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--blue-dark);
+  letter-spacing: 3px;
+  margin: 12px 0 4px;
+}
+.qr-sub { font-size: 12px; color: var(--gray-muted); }
+.qr-svg { margin: 0 auto; display: block; }
+
+/* ── ALERTS / BANNERS ── */
+.banner {
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+}
+.banner-ok { background: var(--green-light); color: var(--green-dark); border: 0.5px solid var(--green-mid); }
+.banner-warn { background: var(--amber-light); color: var(--amber-dark); border: 0.5px solid #EF9F27; }
+.banner-err { background: var(--red-light); color: var(--red-dark); border: 0.5px solid var(--red-mid); }
+.banner-info { background: var(--blue-light); color: var(--blue-dark); border: 0.5px solid var(--blue-mid); }
+.banner-text strong { display: block; font-weight: 600; margin-bottom: 2px; }
+
+/* ── COMPARE ROW ── */
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.compare-box {
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  border: 0.5px solid var(--gray-border);
+}
+.compare-box.declared { background: var(--gray-bg); }
+.compare-box.actual-ok { background: var(--green-light); border-color: var(--green-mid); }
+.compare-box.actual-err { background: var(--red-light); border-color: var(--red-mid); }
+.compare-lbl { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; color: var(--gray-muted); }
+.compare-val { font-size: 16px; font-weight: 600; font-family: var(--font-mono); }
+
+/* ── ZONE CARDS (Module 3) ── */
+.zone-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.zone-card {
+  background: var(--gray-card);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  border: 1px solid var(--gray-border);
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.zone-card:hover { border-color: var(--blue-mid); }
+.zone-card.selected { border: 2px solid var(--blue-mid); }
+.zone-name { font-size: 13px; font-weight: 600; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+.zone-bar-bg { background: var(--gray-bg); border-radius: 99px; height: 5px; overflow: hidden; margin: 6px 0; }
+.zone-bar-fill { height: 100%; border-radius: 99px; transition: width 0.4s; }
+.zone-pct { font-family: var(--font-mono); font-size: 12px; font-weight: 500; }
+.badge {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 99px;
+  font-weight: 600;
+}
+.badge-ok { background: var(--green-light); color: var(--green-dark); }
+.badge-warn { background: var(--amber-light); color: var(--amber-dark); }
+.badge-full { background: var(--red-light); color: var(--red-dark); }
+
+/* ── STEP INDICATOR ── */
+.steps { display: flex; gap: 4px; margin-bottom: 16px; }
+.step-dot { flex: 1; height: 3px; border-radius: 99px; background: var(--gray-surface); transition: background 0.3s; }
+.step-dot.done { background: var(--green-mid); }
+.step-dot.active { background: var(--blue-mid); }
+
+/* ── DETAIL PANEL ── */
+.detail-panel {
+  background: var(--gray-card);
+  border-radius: var(--radius);
+  border: 1.5px solid var(--blue-mid);
+  padding: 16px;
+  margin-bottom: 12px;
+  animation: slideIn 0.2s ease;
+}
+@keyframes slideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── PAGE HEADER ── */
+.page-header {
+  margin-bottom: 16px;
+  padding-top: 4px;
+}
+.page-header h1 { font-size: 20px; font-weight: 600; color: var(--gray-text); }
+.page-header p { font-size: 13px; color: var(--gray-muted); margin-top: 2px; }
+
+/* ── INFO ROWS ── */
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 0.5px solid var(--gray-border);
+  font-size: 13px;
+}
+.info-row:last-child { border-bottom: none; }
+.info-lbl { color: var(--gray-muted); }
+.info-val { font-weight: 500; color: var(--gray-text); text-align: right; }
+
+/* ── MERCH TABLE ── */
+.merch-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+.merch-table th {
+  background: var(--blue-light);
+  color: var(--blue-dark);
+  padding: 7px 8px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border-bottom: 1px solid #B5D4F4;
+}
+.merch-table td {
+  padding: 8px;
+  border-bottom: 0.5px solid var(--gray-border);
+  color: var(--gray-text);
+}
+.merch-table td.auto { color: var(--blue-mid); font-weight: 500; }
+.merch-table tr:last-child td { border-bottom: none; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--gray-text);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 999;
+  transition: transform 0.3s;
+  white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ── DIVIDER ── */
+.divider { border: none; border-top: 0.5px solid var(--gray-border); margin: 10px 0; }
+
+/* ── KPI GRID ── */
+.kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.kpi-card {
+  background: var(--gray-card);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  border: 0.5px solid var(--gray-border);
+}
+.kpi-lbl { font-size: 11px; color: var(--gray-muted); font-weight: 500; margin-bottom: 4px; }
+.kpi-val { font-size: 24px; font-weight: 600; font-family: var(--font-mono); color: var(--gray-text); }
+.kpi-sub { font-size: 11px; color: var(--gray-muted); margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">BM</div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="showPage('m1')" id="tab-m1">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      Pointage quai
+    </div>
+    <div class="nav-tab" onclick="showPage('m2')" id="tab-m2">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Réception
+    </div>
+    <div class="nav-tab" onclick="showPage('m3')" id="tab-m3">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Stock
+    </div>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════════════ -->
+<!--  MODULE 1 — POINTAGE QUAI                  -->
+<!-- ════════════════════════════════════════════ -->
+<div class="page active" id="m1">
+  <div class="page-header">
+    <h1>Pointage quai</h1>
+    <p>Fiche de pointage sous palan & par palanquée</p>
+  </div>
+
+  <!-- ÉTAPE 1 — Navire -->
+  <div id="m1-step1">
+    <div class="steps">
+      <div class="step-dot active"></div>
+      <div class="step-dot"></div>
+      <div class="step-dot"></div>
+      <div class="step-dot"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 17l3-3 3 3 3-3 3 3 3-3 3 3M3 7h18M5 7V4h14v3"/></svg>
+        Informations navire
+      </div>
+      <div class="field">
+        <label>Nom du navire</label>
+        <input type="text" id="navire" placeholder="Ex : MSC AURORA">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="date-nav">
+        </div>
+        <div class="field">
+          <label>Cale n°</label>
+          <input type="text" id="cale" placeholder="Ex : 2">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Engin n°</label>
+          <input type="text" id="engin" placeholder="Ex : GRU-04">
+        </div>
+        <div class="field">
+          <label>Marque & n°s</label>
+          <input type="text" id="marque" placeholder="Ex : A-001">
+        </div>
+      </div>
+      <div class="field">
+        <label>Shift</label>
+        <div class="shift-row">
+          <div class="shift-btn active" onclick="selectShift(1,this)">Shift 1</div>
+          <div class="shift-btn" onclick="selectShift(2,this)">Shift 2</div>
+          <div class="shift-btn" onclick="selectShift(3,this)">Shift 3</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="goStep1to2()">
+      Suivant — Émargement
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+  </div>
+
+  <!-- ÉTAPE 2 — Émargement palanquées -->
+  <div id="m1-step2" style="display:none">
+    <div class="steps">
+      <div class="step-dot done"></div>
+      <div class="step-dot active"></div>
+      <div class="step-dot"></div>
+      <div class="step-dot"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+        Émargement par palanquée
+      </div>
+      <table class="palan-table" id="palan-table">
+        <thead>
+          <tr>
+            <th style="width:25%">Palanquée</th>
+            <th style="width:30%">Nb. colis</th>
+            <th style="width:45%">Nature</th>
+          </tr>
+        </thead>
+        <tbody id="palan-tbody"></tbody>
+      </table>
+      <button class="add-row-btn" onclick="addPalanRow()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        Ajouter une palanquée
+      </button>
+      <div class="stat-row">
+        <div class="stat-box">
+          <div class="stat-lbl">Palanquées</div>
+          <div class="stat-val" id="total-palan">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-lbl">Total colis</div>
+          <div class="stat-val" id="total-colis">0</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="goStep2to3()">
+      Suivant — Camion & chauffeur
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+    <button class="btn btn-outline" onclick="backToStep(1,'m1-step1','m1-step2')">Retour</button>
+  </div>
+
+  <!-- ÉTAPE 3 — Camion & chauffeur -->
+  <div id="m1-step3" style="display:none">
+    <div class="steps">
+      <div class="step-dot done"></div>
+      <div class="step-dot done"></div>
+      <div class="step-dot active"></div>
+      <div class="step-dot"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        Transport & marchandise
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Immatriculation</label>
+          <input type="text" id="camion" placeholder="Ex : BB 4521 RB">
+        </div>
+        <div class="field">
+          <label>Destination</label>
+          <select id="destination">
+            <option value="">Choisir...</option>
+            <option>Magasin 1</option>
+            <option>Magasin 2</option>
+            <option>Magasin 3</option>
+            <option>Magasin 4</option>
+            <option>Magasin C/1</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Nom du chauffeur</label>
+        <input type="text" id="chauffeur" placeholder="Nom complet">
+      </div>
+      <div class="field">
+        <label>Type de marchandise</label>
+        <select id="merch-type">
+          <option value="">Sélectionner...</option>
+          <option>Riz 25kg</option>
+          <option>Riz 50kg</option>
+          <option>Farine</option>
+          <option>Sucre</option>
+          <option>Maïs</option>
+          <option>Soja</option>
+          <option>Lentilles</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Tonnage (t)</label>
+          <input type="number" id="tonnage" placeholder="0">
+        </div>
+        <div class="field">
+          <label>Pointeur (nom)</label>
+          <input type="text" id="pointeur-nom" placeholder="Votre nom">
+        </div>
+      </div>
+      <div class="field">
+        <label>N° MLE (matricule)</label>
+        <input type="text" id="pointeur-mle" placeholder="MLE-XXXX">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="goStep3to4()">
+      Suivant — Signature chauffeur
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+    <button class="btn btn-outline" onclick="backToStep(2,'m1-step2','m1-step3')">Retour</button>
+  </div>
+
+  <!-- ÉTAPE 4 — Signature chauffeur -->
+  <div id="m1-step4" style="display:none">
+    <div class="steps">
+      <div class="step-dot done"></div>
+      <div class="step-dot done"></div>
+      <div class="step-dot done"></div>
+      <div class="step-dot active"></div>
+    </div>
+    <div class="banner banner-info">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+      <div class="banner-text"><strong>Retourner le téléphone vers le chauffeur</strong>Il doit vérifier le récapitulatif et signer.</div>
+    </div>
+    <div class="card" id="recap-chauffeur"></div>
+    <div class="card">
+      <div class="card-title">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z"/></svg>
+        Signature du chauffeur
+      </div>
+      <canvas id="sig-canvas" width="400" height="120" style="width:100%;border:1.5px solid var(--gray-border);border-radius:var(--radius-sm);background:#fff;cursor:crosshair;touch-action:none;display:block;margin-bottom:8px;"></canvas>
+      <button class="btn btn-outline" onclick="clearSig()" style="margin-bottom:10px;font-size:12px;padding:8px">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 6h18M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>
+        Effacer la signature
+      </button>
+      <button class="btn btn-success" onclick="validerFiche()">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Confirmer & générer le bon
+      </button>
+      <button class="btn btn-outline" onclick="backToStep(3,'m1-step3','m1-step4')">Retour</button>
+    </div>
+  </div>
+
+  <!-- RÉSULTAT — QR CODE -->
+  <div id="m1-result" style="display:none">
+    <div class="banner banner-ok">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <div class="banner-text"><strong>Bon de délivrance généré</strong>À communiquer au chauffeur pour le magasin.</div>
+    </div>
+    <div class="qr-container">
+      <div id="qr-display"></div>
+      <div class="qr-number" id="bon-number">—</div>
+      <div class="qr-sub">Scanner au magasin pour charger les données</div>
+    </div>
+    <div class="card" id="bon-recap"></div>
+    <button class="btn btn-primary" onclick="resetM1()">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      Nouveau pointage
+    </button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!--  MODULE 2 — RÉCEPTION MAGASIN              -->
+<!-- ════════════════════════════════════════════ -->
+<div class="page" id="m2">
+  <div class="page-header">
+    <h1>Réception magasin</h1>
+    <p>Vérification & fiche de transfert</p>
+  </div>
+
+  <!-- SCAN BON -->
+  <div id="m2-scan">
+    <div class="card">
+      <div class="card-title">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h.01M14 17h.01M17 14h.01M17 17h.01M20 14h.01M20 17h.01"/></svg>
+        Saisir le numéro du bon
+      </div>
+      <div class="field">
+        <label>Numéro de bon</label>
+        <input type="text" id="scan-bon" placeholder="BD-XXXX-XXXX" style="font-family:var(--font-mono);font-size:16px;letter-spacing:1px;text-transform:uppercase" oninput="checkBon(this.value)">
+      </div>
+      <div id="bon-found" style="display:none">
+        <div class="banner banner-ok">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <div class="banner-text"><strong id="bon-found-title">Bon trouvé</strong><span id="bon-found-sub">—</span></div>
+        </div>
+        <button class="btn btn-primary" onclick="startVerif()">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Commencer la vérification
+        </button>
+      </div>
+      <div id="bon-notfound" style="display:none">
+        <div class="banner banner-warn">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+          <div class="banner-text"><strong>Bon introuvable</strong>Vérifiez le numéro et réessayez.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Liste des bons disponibles (démo) -->
+    <div class="card">
+      <div class="card-title" style="font-size:12px;color:var(--gray-muted)">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Bons en attente de réception
+      </div>
+      <div id="bons-list"></div>
+    </div>
+  </div>
+
+  <!-- VÉRIFICATION -->
+  <div id="m2-verif" style="display:none">
+    <div class="card">
+      <div class="card-title">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+        Données du bon <span class="auto-badge">auto</span>
+      </div>
+      <div id="verif-infos"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+        Comptage réel au magasin
+      </div>
+      <div class="compare-grid">
+        <div class="compare-box declared">
+          <div class="compare-lbl">Déclaré quai</div>
+          <div class="compare-val" id="cmp-declared">—</div>
+          <div style="font-size:11px;color:var(--gray-muted);margin-top:2px">colis</div>
+        </div>
+        <div class="compare-box" id="cmp-actual-box">
+          <div class="compare-lbl">Compté magasin</div>
+          <div class="compare-val" id="cmp-actual-val">—</div>
+          <div style="font-size:11px;color:var(--gray-muted);margin-top:2px">colis</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Sacs comptés</label>
+        <input type="number" id="comptage" placeholder="0" oninput="updateComparison()">
+      </div>
+      <div id="ecart-banner" style="display:none"></div>
+      <div class="field">
+        <label>État de la marchandise</label>
+        <select id="etat-merch">
+          <option value="bon">Bon état</option>
+          <option value="partiel">Partiellement endommagée</option>
+          <option value="mauvais">Mauvais état</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Nom du pointeur magasin</label>
+        <input type="text" id="pointeur-mag" placeholder="Votre nom">
+      </div>
+      <div class="field">
+        <label>Observations (optionnel)</label>
+        <textarea id="observations" rows="2" placeholder="Remarques éventuelles..."></textarea>
+      </div>
+      <button class="btn btn-success" onclick="validerVerif()" id="btn-valider-verif">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Valider la réception
+      </button>
+      <button class="btn btn-outline" onclick="showPage('m2');document.getElementById('m2-scan').style.display='block';document.getElementById('m2-verif').style.display='none'">Annuler</button>
+    </div>
+  </div>
+
+  <!-- RÉSULTAT RÉCEPTION -->
+  <div id="m2-result" style="display:none">
+    <div id="result-banner"></div>
+    <div class="card" id="transfert-card">
+      <div class="card-title">Fiche de transfert <span class="auto-badge">générée</span></div>
+      <div id="transfert-infos"></div>
+      <hr class="divider">
+      <div class="card-title" style="margin-top:8px">Double signature</div>
+      <div class="sig-row-double">
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--gray-muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px">Pointeur</div>
+          <div class="sig-zone signed" id="sig-pointeur">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--green-mid)"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+            <div class="sig-label done" id="sig-pointeur-name">—</div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--gray-muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px">Magasinier</div>
+          <div class="sig-zone" id="sig-mag" onclick="signMagasinier()">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 0l.172.172a2 2 0 010 2.828L12 16H9v-3z"/></svg>
+            <div class="sig-label">Appuyer pour signer</div>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-success" onclick="cloturerTransfert()" id="btn-cloturer" disabled style="opacity:0.4">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Clôturer & mettre à jour le stock
+      </button>
+    </div>
+  </div>
+
+  <!-- CLÔTURE OK -->
+  <div id="m2-done" style="display:none">
+    <div class="banner banner-ok">
+      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <div class="banner-text"><strong>Transfert clôturé</strong>Stock mis à jour automatiquement.</div>
+    </div>
+    <div class="card" id="done-recap"></div>
+    <button class="btn btn-primary" onclick="resetM2()">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      Nouvelle réception
+    </button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!--  MODULE 3 — TABLEAU DE BORD STOCK          -->
+<!-- ════════════════════════════════════════════ -->
+<div class="page" id="m3">
+  <div class="page-header">
+    <h1>Stock magasins</h1>
+    <p id="m3-timestamp">—</p>
+  </div>
+  <div class="kpi-grid" id="kpi-grid"></div>
+  <div class="zone-grid" id="zone-grid-m3"></div>
+  <div class="detail-panel" id="detail-panel" style="display:none"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  DATA STORE
+// ══════════════════════════════════════════════
+let db = JSON.parse(localStorage.getItem('bm_db') || 'null') || {
+  bons: [],
+  transferts: [],
+  stock: {
+    'Magasin 1': { cap: 10000, occ: 7633 },
+    'Magasin 2': { cap: 6000, occ: 4868 },
+    'Magasin 3': { cap: 6000, occ: 3529 },
+    'Magasin 4': { cap: 3000, occ: 3674 },
+    'Magasin C/1': { cap: 8000, occ: 7355 }
+  }
+};
+
+function save() {
+  localStorage.setItem('bm_db', JSON.stringify(db));
+}
+
+// ══════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+  if (id === 'm3') renderM3();
+  if (id === 'm2') renderBonsList();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ══════════════════════════════════════════════
+//  MODULE 1
+// ══════════════════════════════════════════════
+let selectedShift = 1;
+let palanRows = [];
+let sigCanvas, sigCtx, isDrawing = false;
+
+function selectShift(n, el) {
+  selectedShift = n;
+  document.querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function initDate() {
+  const d = new Date();
+  document.getElementById('date-nav').value = d.toISOString().split('T')[0];
+}
+
+function addPalanRow() {
+  palanRows.push({ id: palanRows.length + 1, colis: '', nature: '' });
+  renderPalanTable();
+}
+
+function renderPalanTable() {
+  const tbody = document.getElementById('palan-tbody');
+  tbody.innerHTML = palanRows.map((r, i) => `
+    <tr>
+      <td><span class="palan-num">${String(r.id).padStart(2,'0')}</span></td>
+      <td><input type="number" value="${r.colis}" placeholder="0" oninput="palanRows[${i}].colis=+this.value;updateTotals()" min="0"></td>
+      <td><input type="text" value="${r.nature}" placeholder="Riz 25kg..." oninput="palanRows[${i}].nature=this.value"></td>
+    </tr>
+  `).join('');
+  updateTotals();
+}
+
+function updateTotals() {
+  const totalC = palanRows.reduce((s, r) => s + (r.colis || 0), 0);
+  document.getElementById('total-palan').textContent = palanRows.length;
+  document.getElementById('total-colis').textContent = totalC.toLocaleString();
+}
+
+function goStep1to2() {
+  const navire = document.getElementById('navire').value.trim();
+  if (!navire) { showToast('Veuillez saisir le nom du navire'); return; }
+  if (palanRows.length === 0) addPalanRow();
+  document.getElementById('m1-step1').style.display = 'none';
+  document.getElementById('m1-step2').style.display = 'block';
+}
+
+function goStep2to3() {
+  const total = palanRows.reduce((s, r) => s + (r.colis || 0), 0);
+  if (palanRows.length === 0 || total === 0) { showToast('Ajoutez au moins une palanquée'); return; }
+  document.getElementById('m1-step2').style.display = 'none';
+  document.getElementById('m1-step3').style.display = 'block';
+}
+
+function goStep3to4() {
+  const camion = document.getElementById('camion').value.trim();
+  const chauffeur = document.getElementById('chauffeur').value.trim();
+  const dest = document.getElementById('destination').value;
+  if (!camion || !chauffeur || !dest) { showToast('Remplissez tous les champs obligatoires'); return; }
+  document.getElementById('m1-step3').style.display = 'none';
+  document.getElementById('m1-step4').style.display = 'block';
+  buildRecapChauffeur();
+  initSigCanvas();
+}
+
+function buildRecapChauffeur() {
+  const totalColis = palanRows.reduce((s, r) => s + (r.colis || 0), 0);
+  document.getElementById('recap-chauffeur').innerHTML = `
+    <div class="card-title">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+      Récapitulatif à vérifier
+    </div>
+    <div class="info-row"><span class="info-lbl">Navire</span><span class="info-val">${document.getElementById('navire').value}</span></div>
+    <div class="info-row"><span class="info-lbl">Marchandise</span><span class="info-val">${document.getElementById('merch-type').value || '—'}</span></div>
+    <div class="info-row"><span class="info-lbl">Total colis</span><span class="info-val" style="font-family:var(--font-mono);color:var(--blue-mid)">${totalColis.toLocaleString()} colis</span></div>
+    <div class="info-row"><span class="info-lbl">Destination</span><span class="info-val">${document.getElementById('destination').value}</span></div>
+    <div class="info-row"><span class="info-lbl">Camion</span><span class="info-val">${document.getElementById('camion').value}</span></div>
+    <div class="info-row"><span class="info-lbl">Chauffeur</span><span class="info-val">${document.getElementById('chauffeur').value}</span></div>
+  `;
+}
+
+function initSigCanvas() {
+  sigCanvas = document.getElementById('sig-canvas');
+  sigCtx = sigCanvas.getContext('2d');
+  sigCtx.strokeStyle = '#0C2D5E';
+  sigCtx.lineWidth = 2;
+  sigCtx.lineCap = 'round';
+
+  sigCanvas.addEventListener('mousedown', e => { isDrawing = true; const r = sigCanvas.getBoundingClientRect(); sigCtx.beginPath(); sigCtx.moveTo((e.clientX - r.left) * sigCanvas.width / r.width, (e.clientY - r.top) * sigCanvas.height / r.height); });
+  sigCanvas.addEventListener('mousemove', e => { if (!isDrawing) return; const r = sigCanvas.getBoundingClientRect(); sigCtx.lineTo((e.clientX - r.left) * sigCanvas.width / r.width, (e.clientY - r.top) * sigCanvas.height / r.height); sigCtx.stroke(); });
+  sigCanvas.addEventListener('mouseup', () => isDrawing = false);
+  sigCanvas.addEventListener('touchstart', e => { e.preventDefault(); isDrawing = true; const r = sigCanvas.getBoundingClientRect(); const t = e.touches[0]; sigCtx.beginPath(); sigCtx.moveTo((t.clientX - r.left) * sigCanvas.width / r.width, (t.clientY - r.top) * sigCanvas.height / r.height); }, { passive: false });
+  sigCanvas.addEventListener('touchmove', e => { e.preventDefault(); if (!isDrawing) return; const r = sigCanvas.getBoundingClientRect(); const t = e.touches[0]; sigCtx.lineTo((t.clientX - r.left) * sigCanvas.width / r.width, (t.clientY - r.top) * sigCanvas.height / r.height); sigCtx.stroke(); }, { passive: false });
+  sigCanvas.addEventListener('touchend', () => isDrawing = false);
+}
+
+function clearSig() { if (sigCtx) sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height); }
+
+function genBonNum() {
+  const d = new Date();
+  const seq = String(db.bons.length + 1).padStart(4, '0');
+  return `BD-${d.getFullYear()}-${seq}`;
+}
+
+function validerFiche() {
+  const totalColis = palanRows.reduce((s, r) => s + (r.colis || 0), 0);
+  const bon = {
+    id: genBonNum(),
+    date: new Date().toISOString(),
+    navire: document.getElementById('navire').value,
+    cale: document.getElementById('cale').value,
+    engin: document.getElementById('engin').value,
+    marque: document.getElementById('marque').value,
+    shift: selectedShift,
+    merch: document.getElementById('merch-type').value,
+    tonnage: document.getElementById('tonnage').value,
+    camion: document.getElementById('camion').value,
+    chauffeur: document.getElementById('chauffeur').value,
+    destination: document.getElementById('destination').value,
+    pointeur: document.getElementById('pointeur-nom').value,
+    mle: document.getElementById('pointeur-mle').value,
+    palanquees: [...palanRows],
+    totalColis,
+    status: 'en_attente'
+  };
+  db.bons.push(bon);
+  save();
+  document.getElementById('bon-number').textContent = bon.id;
+  var appUrl = 'https://yassineboutahir64.github.io/bm-app/?bon=' + encodeURIComponent(bon.id);
+  renderQR('qr-display', appUrl);
+  document.getElementById('bon-recap').innerHTML = `
+    <div class="card-title">Résumé du bon</div>
+    <div class="info-row"><span class="info-lbl">Navire</span><span class="info-val">${bon.navire}</span></div>
+    <div class="info-row"><span class="info-lbl">Marchandise</span><span class="info-val">${bon.merch}</span></div>
+    <div class="info-row"><span class="info-lbl">Total colis</span><span class="info-val" style="font-family:var(--font-mono);color:var(--blue-mid)">${bon.totalColis.toLocaleString()}</span></div>
+    <div class="info-row"><span class="info-lbl">Destination</span><span class="info-val">${bon.destination}</span></div>
+    <div class="info-row"><span class="info-lbl">Chauffeur</span><span class="info-val">${bon.chauffeur} — ${bon.camion}</span></div>
+    <div class="info-row"><span class="info-lbl">Pointeur</span><span class="info-val">${bon.pointeur} (${bon.mle})</span></div>
+  `;
+  document.getElementById('m1-step4').style.display = 'none';
+  document.getElementById('m1-result').style.display = 'block';
+  showToast('Bon ' + bon.id + ' créé !');
+}
+
+
+
+function backToStep(n, showId, hideId) {
+  document.getElementById(hideId).style.display = 'none';
+  document.getElementById(showId).style.display = 'block';
+}
+
+function resetM1() {
+  palanRows = [];
+  selectedShift = 1;
+  ['navire','cale','engin','marque','camion','chauffeur','tonnage','pointeur-nom','pointeur-mle'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  ['destination','merch-type'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.selectedIndex = 0;
+  });
+  document.getElementById('m1-result').style.display = 'none';
+  document.getElementById('m1-step1').style.display = 'block';
+  document.querySelectorAll('.shift-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+  initDate();
+}
+
+// ══════════════════════════════════════════════
+//  MODULE 2
+// ══════════════════════════════════════════════
+let currentBon = null;
+let magSigned = false;
+
+function renderBonsList() {
+  const list = document.getElementById('bons-list');
+  const pending = db.bons.filter(b => b.status === 'en_attente');
+  if (pending.length === 0) {
+    list.innerHTML = '<div style="font-size:13px;color:var(--gray-muted);text-align:center;padding:12px 0">Aucun bon en attente</div>';
+    return;
+  }
+  list.innerHTML = pending.map(b => `
+    <div onclick="selectBon('${b.id}')" style="padding:10px 12px;background:var(--gray-bg);border-radius:var(--radius-sm);margin-bottom:8px;cursor:pointer;border:1px solid var(--gray-border);display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--blue-dark)">${b.id}</div>
+        <div style="font-size:12px;color:var(--gray-muted);margin-top:2px">${b.navire} — ${b.merch} — ${b.destination}</div>
+      </div>
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--gray-muted);flex-shrink:0"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+  `).join('');
+}
+
+function selectBon(id) {
+  document.getElementById('scan-bon').value = id;
+  checkBon(id);
+}
+
+function checkBon(val) {
+  const v = val.trim().toUpperCase();
+  const bon = db.bons.find(b => b.id === v && b.status === 'en_attente');
+  const found = document.getElementById('bon-found');
+  const notfound = document.getElementById('bon-notfound');
+  if (v.length < 8) { found.style.display = 'none'; notfound.style.display = 'none'; return; }
+  if (bon) {
+    currentBon = bon;
+    document.getElementById('bon-found-title').textContent = 'Bon trouvé — ' + bon.id;
+    document.getElementById('bon-found-sub').textContent = bon.navire + ' — ' + bon.merch + ' — ' + bon.totalColis.toLocaleString() + ' colis';
+    found.style.display = 'block';
+    notfound.style.display = 'none';
+  } else {
+    found.style.display = 'none';
+    notfound.style.display = v.length >= 8 ? 'block' : 'none';
+  }
+}
+
+function startVerif() {
+  if (!currentBon) return;
+  document.getElementById('m2-scan').style.display = 'none';
+  document.getElementById('m2-verif').style.display = 'block';
+  document.getElementById('cmp-declared').textContent = currentBon.totalColis.toLocaleString();
+  document.getElementById('verif-infos').innerHTML = `
+    <div class="info-row"><span class="info-lbl">Bon</span><span class="info-val" style="font-family:var(--font-mono);color:var(--blue-mid)">${currentBon.id}</span></div>
+    <div class="info-row"><span class="info-lbl">Navire</span><span class="info-val">${currentBon.navire}</span></div>
+    <div class="info-row"><span class="info-lbl">Marchandise</span><span class="info-val">${currentBon.merch}</span></div>
+    <div class="info-row"><span class="info-lbl">Tonnage</span><span class="info-val">${currentBon.tonnage} t</span></div>
+    <div class="info-row"><span class="info-lbl">Camion</span><span class="info-val">${currentBon.camion}</span></div>
+    <div class="info-row"><span class="info-lbl">Chauffeur</span><span class="info-val">${currentBon.chauffeur}</span></div>
+    <div class="info-row"><span class="info-lbl">Destination</span><span class="info-val">${currentBon.destination}</span></div>
+  `;
+  document.getElementById('comptage').value = '';
+  document.getElementById('ecart-banner').style.display = 'none';
+}
+
+function updateComparison() {
+  const comptage = +document.getElementById('comptage').value;
+  const declared = currentBon.totalColis;
+  const box = document.getElementById('cmp-actual-box');
+  const val = document.getElementById('cmp-actual-val');
+  const banner = document.getElementById('ecart-banner');
+  val.textContent = comptage > 0 ? comptage.toLocaleString() : '—';
+  if (comptage <= 0) { box.className = 'compare-box'; banner.style.display = 'none'; return; }
+  const diff = comptage - declared;
+  if (diff === 0) {
+    box.className = 'compare-box actual-ok';
+    banner.style.display = 'block';
+    banner.innerHTML = `<div class="banner banner-ok"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><div class="banner-text"><strong>Conforme</strong>Aucun écart détecté.</div></div>`;
+  } else {
+    box.className = 'compare-box actual-err';
+    banner.style.display = 'block';
+    banner.innerHTML = `<div class="banner banner-err"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg><div class="banner-text"><strong>Écart détecté : ${diff > 0 ? '+' : ''}${diff} colis</strong>Un rapport sera envoyé au chef magasinier.</div></div>`;
+  }
+}
+
+function validerVerif() {
+  const comptage = +document.getElementById('comptage').value;
+  const pointeur = document.getElementById('pointeur-mag').value.trim();
+  if (!comptage || comptage <= 0) { showToast('Saisir le nombre de sacs comptés'); return; }
+  if (!pointeur) { showToast('Saisir le nom du pointeur magasin'); return; }
+  const diff = comptage - currentBon.totalColis;
+  const isOk = diff === 0;
+  const ft = {
+    id: 'FT-' + currentBon.id.replace('BD-', ''),
+    bonId: currentBon.id,
+    date: new Date().toISOString(),
+    navire: currentBon.navire,
+    merch: currentBon.merch,
+    tonnage: currentBon.tonnage,
+    camion: currentBon.camion,
+    chauffeur: currentBon.chauffeur,
+    origine: 'Quai',
+    destination: currentBon.destination,
+    pointeurQuai: currentBon.pointeur,
+    pointeurMag: pointeur,
+    colisDecare: currentBon.totalColis,
+    colisComptes: comptage,
+    ecart: diff,
+    etat: document.getElementById('etat-merch').value,
+    observations: document.getElementById('observations').value,
+    status: 'en_attente_signature'
+  };
+  db.transferts.push(ft);
+  currentBon.status = 'en_cours';
+  save();
+  magSigned = false;
+  document.getElementById('m2-verif').style.display = 'none';
+  document.getElementById('m2-result').style.display = 'block';
+  document.getElementById('sig-pointeur-name').textContent = pointeur;
+  const resBanner = document.getElementById('result-banner');
+  if (isOk) {
+    resBanner.innerHTML = `<div class="banner banner-ok"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><div class="banner-text"><strong>Marchandise conforme</strong>Déchargement autorisé.</div></div>`;
+  } else {
+    resBanner.innerHTML = `<div class="banner banner-err"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg><div class="banner-text"><strong>Écart de ${Math.abs(diff)} colis</strong>Rapport envoyé au chef magasinier.</div></div>`;
+  }
+  document.getElementById('transfert-infos').innerHTML = `
+    <div class="info-row"><span class="info-lbl">N° fiche</span><span class="info-val" style="font-family:var(--font-mono)">${ft.id}</span></div>
+    <div class="info-row"><span class="info-lbl">Bon lié</span><span class="info-val" style="font-family:var(--font-mono);color:var(--blue-mid)">${ft.bonId}</span></div>
+    <div class="info-row"><span class="info-lbl">Origine → Destination</span><span class="info-val">${ft.origine} → ${ft.destination}</span></div>
+    <div class="info-row"><span class="info-lbl">Navire</span><span class="info-val">${ft.navire}</span></div>
+    <div class="info-row"><span class="info-lbl">Marchandise</span><span class="info-val">${ft.merch}</span></div>
+    <div class="info-row"><span class="info-lbl">Colis déclarés</span><span class="info-val" style="font-family:var(--font-mono)">${ft.colisDecare.toLocaleString()}</span></div>
+    <div class="info-row"><span class="info-lbl">Colis comptés</span><span class="info-val" style="font-family:var(--font-mono);color:${diff === 0 ? 'var(--green-dark)' : 'var(--red-dark)'}">${ft.colisComptes.toLocaleString()}</span></div>
+    <div class="info-row"><span class="info-lbl">Camion</span><span class="info-val">${ft.camion}</span></div>
+  `;
+}
+
+function signMagasinier() {
+  const box = document.getElementById('sig-mag');
+  const nom = prompt('Nom du magasinier :');
+  if (!nom) return;
+  box.classList.add('signed');
+  box.innerHTML = `<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--green-mid)"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg><div class="sig-label done">${nom}</div>`;
+  magSigned = true;
+  const btn = document.getElementById('btn-cloturer');
+  btn.disabled = false;
+  btn.style.opacity = '1';
+}
+
+function cloturerTransfert() {
+  if (!magSigned) return;
+  const ft = db.transferts[db.transferts.length - 1];
+  ft.status = 'cloture';
+  currentBon.status = 'traite';
+  if (db.stock[ft.destination]) {
+    db.stock[ft.destination].occ = Math.min(db.stock[ft.destination].occ + ft.colisComptes, db.stock[ft.destination].cap);
+  }
+  save();
+  document.getElementById('m2-result').style.display = 'none';
+  document.getElementById('m2-done').style.display = 'block';
+  document.getElementById('done-recap').innerHTML = `
+    <div class="card-title">Transfert clôturé</div>
+    <div class="info-row"><span class="info-lbl">Fiche</span><span class="info-val" style="font-family:var(--font-mono)">${ft.id}</span></div>
+    <div class="info-row"><span class="info-lbl">Magasin</span><span class="info-val">${ft.destination}</span></div>
+    <div class="info-row"><span class="info-lbl">Colis transférés</span><span class="info-val" style="font-family:var(--font-mono);color:var(--green-dark)">${ft.colisComptes.toLocaleString()}</span></div>
+    <div class="info-row"><span class="info-lbl">Stock mis à jour</span><span class="info-val" style="color:var(--green-dark)">✓ Oui</span></div>
+  `;
+  showToast('Stock ' + ft.destination + ' mis à jour !');
+}
+
+function resetM2() {
+  currentBon = null;
+  magSigned = false;
+  document.getElementById('scan-bon').value = '';
+  document.getElementById('bon-found').style.display = 'none';
+  document.getElementById('bon-notfound').style.display = 'none';
+  document.getElementById('m2-done').style.display = 'none';
+  document.getElementById('m2-scan').style.display = 'block';
+  renderBonsList();
+}
+
+// ══════════════════════════════════════════════
+//  MODULE 3
+// ══════════════════════════════════════════════
+function barColor(p) {
+  if (p >= 100) return '#A32D2D';
+  if (p >= 80) return '#EF9F27';
+  return '#1D9E75';
+}
+
+function badgeClass(p) {
+  if (p >= 100) return 'badge-full';
+  if (p >= 80) return 'badge-warn';
+  return 'badge-ok';
+}
+
+function badgeLabel(p) {
+  if (p >= 100) return 'Saturé';
+  if (p >= 80) return 'Attention';
+  return 'OK';
+}
+
+function renderM3() {
+  const now = new Date();
+  document.getElementById('m3-timestamp').textContent = 'Mis à jour : ' + now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const mags = Object.entries(db.stock);
+  const totalCap = mags.reduce((s, [, v]) => s + v.cap, 0);
+  const totalOcc = mags.reduce((s, [, v]) => s + v.occ, 0);
+  const rate = Math.round(totalOcc / totalCap * 100);
+  const alerts = mags.filter(([, v]) => Math.round(v.occ / v.cap * 100) >= 80).length;
+  document.getElementById('kpi-grid').innerHTML = `
+    <div class="kpi-card"><div class="kpi-lbl">Capacité totale</div><div class="kpi-val">${(totalCap / 1000).toFixed(0)}k</div><div class="kpi-sub">tonnes</div></div>
+    <div class="kpi-card"><div class="kpi-lbl">Stock total</div><div class="kpi-val">${Math.round(totalOcc / 1000)}k</div><div class="kpi-sub">tonnes occupées</div></div>
+    <div class="kpi-card"><div class="kpi-lbl">Taux global</div><div class="kpi-val" style="color:${barColor(rate)}">${rate}%</div><div class="kpi-sub">remplissage</div></div>
+    <div class="kpi-card"><div class="kpi-lbl">Alertes</div><div class="kpi-val" style="color:${alerts > 0 ? '#A32D2D' : 'var(--gray-text)'}">${alerts}</div><div class="kpi-sub">magasins ≥ 80%</div></div>
+  `;
+  document.getElementById('zone-grid-m3').innerHTML = mags.map(([name, v]) => {
+    const pct = Math.round(v.occ / v.cap * 100);
+    return `
+      <div class="zone-card" onclick="selectMagasin('${name}')">
+        <div class="zone-name">${name} <span class="badge ${badgeClass(pct)}">${badgeLabel(pct)}</span></div>
+        <div class="zone-bar-bg"><div class="zone-bar-fill" style="width:${Math.min(pct,100)}%;background:${barColor(pct)}"></div></div>
+        <div class="zone-pct" style="color:${barColor(pct)}">${pct}%</div>
+        <div style="font-size:11px;color:var(--gray-muted);margin-top:3px">${v.occ.toLocaleString()} / ${v.cap.toLocaleString()} t</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function selectMagasin(name) {
+  const v = db.stock[name];
+  const pct = Math.round(v.occ / v.cap * 100);
+  const dispo = v.cap - v.occ;
+  const panel = document.getElementById('detail-panel');
+  panel.style.display = 'block';
+  panel.innerHTML = `
+    <div class="card-title" style="font-size:15px">${name} <span class="badge ${badgeClass(pct)}" style="margin-left:4px">${badgeLabel(pct)}</span></div>
+    <div class="info-row"><span class="info-lbl">Capacité totale</span><span class="info-val" style="font-family:var(--font-mono)">${v.cap.toLocaleString()} t</span></div>
+    <div class="info-row"><span class="info-lbl">Stock occupé</span><span class="info-val" style="font-family:var(--font-mono)">${v.occ.toLocaleString()} t</span></div>
+    <div class="info-row"><span class="info-lbl">Disponible</span><span class="info-val" style="font-family:var(--font-mono);color:var(--green-dark)">${dispo.toLocaleString()} t</span></div>
+    <div class="info-row"><span class="info-lbl">Taux de remplissage</span><span class="info-val" style="font-family:var(--font-mono);color:${barColor(pct)};font-size:18px">${pct}%</span></div>
+    <div style="background:var(--gray-bg);border-radius:99px;height:8px;overflow:hidden;margin-top:10px"><div style="height:100%;border-radius:99px;background:${barColor(pct)};width:${Math.min(pct,100)}%;transition:width 0.4s"></div></div>
+  `;
+  document.querySelectorAll('.zone-card').forEach(c => c.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+}
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+initDate();
+if (palanRows.length === 0) addPalanRow();
+renderM3();
+
+// Détection automatique du bon depuis l'URL (?bon=BD-2024-0001)
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var bonId = params.get('bon');
+  if (bonId) {
+    showPage('m2');
+    document.getElementById('scan-bon').value = bonId.toUpperCase();
+    checkBon(bonId.toUpperCase());
+    showToast('Bon ' + bonId + ' chargé automatiquement !');
+  }
+})();
+</script>
+</body>
+</html>
