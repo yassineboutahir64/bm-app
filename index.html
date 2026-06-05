@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="BM">
+<meta name="theme-color" content="#0C2D5E">
+<title>BM Manutentions</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F5F5F0; color: #1a1a1a; min-height: 100vh; }
+
+/* NAV */
+.nav { background: #0C2D5E; display: flex; align-items: stretch; position: sticky; top: 0; z-index: 100; }
+.nav-logo { padding: 14px 12px; color: #fff; font-weight: 700; font-size: 14px; border-right: 1px solid rgba(255,255,255,0.15); }
+.nav-tabs { display: flex; flex: 1; overflow-x: auto; }
+.nav-tabs::-webkit-scrollbar { display: none; }
+.tab { padding: 14px 12px; color: rgba(255,255,255,0.55); cursor: pointer; font-size: 12px; font-weight: 600; border-bottom: 2px solid transparent; white-space: nowrap; background: none; border-top: none; border-left: none; border-right: none; }
+.tab.active { color: #fff; border-bottom-color: #5BA4E0; }
+
+/* PAGES */
+.page { display: none; padding: 16px; max-width: 480px; margin: 0 auto; padding-bottom: 40px; }
+.page.active { display: block; }
+
+/* CARD */
+.card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid #E5E5E0; }
+.card-title { font-size: 13px; font-weight: 700; color: #333; margin-bottom: 12px; }
+
+/* FIELD */
+.field { margin-bottom: 10px; }
+.field label { display: block; font-size: 11px; font-weight: 700; color: #888; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+.field input, .field select, .field textarea { width: 100%; background: #F5F5F0; border: 1px solid #DDD; border-radius: 8px; padding: 10px 12px; font-size: 14px; font-family: inherit; color: #1a1a1a; outline: none; -webkit-appearance: none; }
+.field input:focus, .field select:focus { border-color: #0C2D5E; background: #fff; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* STEPS */
+.steps { display: flex; gap: 4px; margin-bottom: 16px; }
+.step { flex: 1; height: 3px; border-radius: 3px; background: #DDD; }
+.step.done { background: #1D9E75; }
+.step.active { background: #0C2D5E; }
+
+/* SHIFT */
+.shift-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.shift-btn { padding: 10px; border-radius: 8px; border: 2px solid #DDD; background: #F5F5F0; font-size: 13px; font-weight: 700; color: #888; cursor: pointer; text-align: center; font-family: inherit; }
+.shift-btn.active { background: #0C2D5E; color: #fff; border-color: #0C2D5E; }
+
+/* BUTTONS */
+.btn { width: 100%; padding: 13px; border-radius: 8px; border: none; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; margin-bottom: 8px; }
+.btn-blue { background: #0C2D5E; color: #fff; }
+.btn-green { background: #085041; color: #fff; }
+.btn-red { background: #A32D2D; color: #fff; }
+.btn-gray { background: #F5F5F0; color: #555; border: 1px solid #DDD; }
+
+/* PALANQUEE TABLE */
+.palan-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+.palan-table th { background: #F5F5F0; padding: 8px; text-align: left; font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; border-bottom: 1px solid #EEE; }
+.palan-table td { padding: 8px; border-bottom: 1px solid #F0F0F0; }
+.palan-table input { width: 100%; border: none; background: transparent; font-size: 13px; font-family: inherit; outline: none; }
+.add-btn { width: 100%; padding: 10px; background: #F5F5F0; border: 2px dashed #DDD; border-radius: 8px; font-size: 12px; color: #888; font-weight: 600; font-family: inherit; cursor: pointer; margin-bottom: 10px; }
+
+/* STAT */
+.stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.stat-box { background: #F5F5F0; border-radius: 8px; padding: 10px 12px; }
+.stat-lbl { font-size: 10px; font-weight: 700; color: #888; text-transform: uppercase; margin-bottom: 3px; }
+.stat-val { font-size: 22px; font-weight: 700; color: #1a1a1a; }
+
+/* SIG */
+.sig-canvas { width: 100%; height: 120px; border: 1px solid #DDD; border-radius: 8px; background: #fff; display: block; margin-bottom: 8px; touch-action: none; }
+
+/* QR */
+.qr-box { background: #fff; border-radius: 12px; padding: 20px; text-align: center; border: 1px solid #EEE; margin-bottom: 12px; }
+.qr-num { font-family: monospace; font-size: 22px; font-weight: 700; color: #0C2D5E; letter-spacing: 3px; margin: 12px 0 4px; }
+.qr-sub { font-size: 11px; color: #888; }
+
+/* BANNER */
+.banner { border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; font-size: 13px; }
+.banner-ok { background: #E1F5EE; color: #085041; border: 1px solid #1D9E75; }
+.banner-warn { background: #FFF3E0; color: #7B4500; border: 1px solid #FF9800; }
+.banner-err { background: #FEECEC; color: #7B1F1F; border: 1px solid #E53935; }
+.banner-info { background: #E3F0FC; color: #0C2D5E; border: 1px solid #5BA4E0; }
+.banner b { display: block; font-weight: 700; margin-bottom: 2px; }
+
+/* INFO ROW */
+.info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #F0F0F0; font-size: 13px; }
+.info-row:last-child { border-bottom: none; }
+.il { color: #888; }
+.iv { font-weight: 600; text-align: right; }
+
+/* COMPARE */
+.cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.cmp-box { border-radius: 8px; padding: 10px 12px; border: 1px solid #DDD; }
+.cmp-box.ok { background: #E1F5EE; border-color: #1D9E75; }
+.cmp-box.err { background: #FEECEC; border-color: #E53935; }
+.cmp-lbl { font-size: 10px; font-weight: 700; color: #888; text-transform: uppercase; margin-bottom: 4px; }
+.cmp-val { font-size: 18px; font-weight: 700; }
+
+/* SIG DOUBLE */
+.sig-dbl { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.sig-zone { border: 2px dashed #DDD; border-radius: 8px; padding: 14px; text-align: center; cursor: pointer; }
+.sig-zone.done { background: #E1F5EE; border: 2px solid #1D9E75; border-style: solid; }
+.sig-zone-lbl { font-size: 10px; font-weight: 700; color: #888; margin-bottom: 4px; text-transform: uppercase; }
+.sig-zone-val { font-size: 12px; color: #888; }
+.sig-zone.done .sig-zone-val { color: #085041; font-weight: 700; }
+
+/* KPI */
+.kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.kpi { background: #fff; border-radius: 10px; padding: 14px; border: 1px solid #E5E5E0; }
+.kpi-lbl { font-size: 11px; color: #888; font-weight: 600; margin-bottom: 4px; }
+.kpi-val { font-size: 26px; font-weight: 700; }
+.kpi-sub { font-size: 11px; color: #888; margin-top: 2px; }
+
+/* ZONE */
+.zone-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.zone-card { background: #fff; border-radius: 10px; padding: 12px; border: 1px solid #E5E5E0; cursor: pointer; }
+.zone-name { font-size: 13px; font-weight: 700; margin-bottom: 6px; display: flex; justify-content: space-between; }
+.zone-bar { background: #F0F0F0; border-radius: 99px; height: 5px; overflow: hidden; margin: 4px 0; }
+.zone-fill { height: 100%; border-radius: 99px; }
+.zone-pct { font-size: 12px; font-weight: 700; }
+.badge { font-size: 10px; padding: 2px 6px; border-radius: 99px; font-weight: 700; }
+.badge-ok { background: #E1F5EE; color: #085041; }
+.badge-warn { background: #FFF3E0; color: #7B4500; }
+.badge-err { background: #FEECEC; color: #7B1F1F; }
+
+/* DETAIL */
+.detail { background: #fff; border-radius: 10px; padding: 16px; margin-bottom: 12px; border: 2px solid #0C2D5E; }
+
+/* PHOTO */
+.photo-lbl { display: flex; align-items: center; justify-content: center; gap: 8px; background: #F5F5F0; border: 2px dashed #DDD; border-radius: 8px; padding: 14px; cursor: pointer; font-size: 13px; color: #888; font-weight: 600; margin-bottom: 4px; }
+.photo-preview { width: 100%; border-radius: 8px; max-height: 180px; object-fit: cover; border: 1px solid #DDD; display: block; margin-bottom: 6px; }
+
+/* BON LIST */
+.bon-item { padding: 10px 12px; background: #F5F5F0; border-radius: 8px; margin-bottom: 8px; cursor: pointer; border: 1px solid #E5E5E0; }
+.bon-item-id { font-family: monospace; font-size: 13px; font-weight: 700; color: #0C2D5E; }
+.bon-item-sub { font-size: 12px; color: #888; margin-top: 2px; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1a1a1a; color: #fff; padding: 10px 20px; border-radius: 99px; font-size: 13px; font-weight: 600; z-index: 999; transition: transform 0.25s; white-space: nowrap; }
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+.page-header { margin-bottom: 16px; }
+.page-header h1 { font-size: 22px; font-weight: 700; }
+.page-header p { font-size: 13px; color: #888; margin-top: 2px; }
+hr.div { border: none; border-top: 1px solid #F0F0F0; margin: 10px 0; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">BM</div>
+  <div class="nav-tabs">
+    <button class="tab active" id="tab-m1" onclick="showPage('m1')">📋 Pointage quai</button>
+    <button class="tab" id="tab-m2" onclick="showPage('m2')">✅ Réception</button>
+    <button class="tab" id="tab-m3" onclick="showPage('m3')">📦 Stock</button>
+  </div>
+</nav>
+
+<!-- MODULE 1 -->
+<div class="page active" id="m1">
+  <div class="page-header"><h1>Pointage quai</h1><p>Fiche sous palan & par palanquée</p></div>
+
+  <div id="s1">
+    <div class="steps"><div class="step active"></div><div class="step"></div><div class="step"></div><div class="step"></div></div>
+    <div class="card">
+      <div class="card-title">🚢 Informations navire</div>
+      <div class="field"><label>Nom du navire</label><input type="text" id="navire" placeholder="Ex : MSC AURORA"></div>
+      <div class="row2">
+        <div class="field"><label>Date</label><input type="date" id="date-nav"></div>
+        <div class="field"><label>Cale n°</label><input type="text" id="cale" placeholder="Ex : 2"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Engin n°</label><input type="text" id="engin" placeholder="GRU-04"></div>
+        <div class="field"><label>Marque & n°s</label><input type="text" id="marque" placeholder="A-001"></div>
+      </div>
+      <div class="field">
+        <label>Shift</label>
+        <div class="shift-row">
+          <button class="shift-btn active" onclick="selShift(1,this)">Shift 1</button>
+          <button class="shift-btn" onclick="selShift(2,this)">Shift 2</button>
+          <button class="shift-btn" onclick="selShift(3,this)">Shift 3</button>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-blue" onclick="go12()">Suivant →</button>
+  </div>
+
+  <div id="s2" style="display:none">
+    <div class="steps"><div class="step done"></div><div class="step active"></div><div class="step"></div><div class="step"></div></div>
+    <div class="card">
+      <div class="card-title">📋 Émargement par palanquée</div>
+      <table class="palan-table">
+        <thead><tr><th>N°</th><th>Colis</th><th>Nature</th></tr></thead>
+        <tbody id="ptbody"></tbody>
+      </table>
+      <button class="add-btn" onclick="addRow()">+ Ajouter une palanquée</button>
+      <div class="stat-row">
+        <div class="stat-box"><div class="stat-lbl">Palanquées</div><div class="stat-val" id="tot-p">0</div></div>
+        <div class="stat-box"><div class="stat-lbl">Total colis</div><div class="stat-val" id="tot-c">0</div></div>
+      </div>
+    </div>
+    <button class="btn btn-blue" onclick="go23()">Suivant →</button>
+    <button class="btn btn-gray" onclick="back('s1','s2')">← Retour</button>
+  </div>
+
+  <div id="s3" style="display:none">
+    <div class="steps"><div class="step done"></div><div class="step done"></div><div class="step active"></div><div class="step"></div></div>
+    <div class="card">
+      <div class="card-title">🚛 Transport & marchandise</div>
+      <div class="row2">
+        <div class="field"><label>Immatriculation</label><input type="text" id="camion" placeholder="BB 4521 RB"></div>
+        <div class="field"><label>Destination</label>
+          <select id="dest"><option value="">Choisir...</option><option>Magasin 1</option><option>Magasin 2</option><option>Magasin 3</option><option>Magasin 4</option></select>
+        </div>
+      </div>
+      <div class="field"><label>Nom du chauffeur</label><input type="text" id="chauffeur" placeholder="Nom complet"></div>
+      <div class="field"><label>Type de marchandise</label>
+        <select id="merch"><option value="">Sélectionner...</option><option>Riz 25kg</option><option>Riz 50kg</option><option>Farine</option><option>Sucre</option><option>Maïs</option><option>Soja</option><option>Lentilles</option></select>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Tonnage (t)</label><input type="number" id="tonnage" placeholder="0"></div>
+        <div class="field"><label>Pointeur</label><input type="text" id="pt-nom" placeholder="Votre nom"></div>
+      </div>
+      <div class="field"><label>N° MLE</label><input type="text" id="pt-mle" placeholder="MLE-XXXX"></div>
+      <div class="field">
+        <label>📷 Photo du chargement</label>
+        <div id="ph-preview" style="display:none">
+          <img id="ph-img" class="photo-preview" alt="Photo">
+          <button class="btn btn-gray" onclick="delPhoto()" style="font-size:12px;padding:8px;margin-bottom:0">🗑 Supprimer</button>
+        </div>
+        <label class="photo-lbl" id="ph-lbl" for="ph-input">📷 Prendre une photo</label>
+        <input type="file" id="ph-input" accept="image/*" capture="environment" style="display:none" onchange="takePhoto(this)">
+      </div>
+    </div>
+    <button class="btn btn-blue" onclick="go34()">Suivant — Signature chauffeur →</button>
+    <button class="btn btn-gray" onclick="back('s2','s3')">← Retour</button>
+  </div>
+
+  <div id="s4" style="display:none">
+    <div class="steps"><div class="step done"></div><div class="step done"></div><div class="step done"></div><div class="step active"></div></div>
+    <div class="banner banner-info"><b>Retourner le téléphone vers le chauffeur</b>Il doit vérifier et signer.</div>
+    <div class="card" id="recap-ch"></div>
+    <div class="card">
+      <div class="card-title">✍️ Signature du chauffeur</div>
+      <canvas id="sig-cv" class="sig-canvas" width="600" height="200"></canvas>
+      <button class="btn btn-gray" onclick="clearSig()" style="font-size:12px;padding:8px">🗑 Effacer</button>
+      <button class="btn btn-green" onclick="valider()">✓ Confirmer & générer le bon</button>
+    </div>
+    <button class="btn btn-gray" onclick="back('s3','s4')">← Retour</button>
+  </div>
+
+  <div id="s-result" style="display:none">
+    <div class="banner banner-ok"><b>✓ Bon de délivrance généré</b>À communiquer au chauffeur.</div>
+    <div class="qr-box">
+      <div id="qr-display"></div>
+      <div class="qr-num" id="qr-num">—</div>
+      <div class="qr-sub">Scanner au magasin</div>
+    </div>
+    <div class="card" id="result-recap"></div>
+    <button class="btn btn-blue" onclick="resetM1()">+ Nouveau pointage</button>
+  </div>
+</div>
+
+<!-- MODULE 2 -->
+<div class="page" id="m2">
+  <div class="page-header"><h1>Réception magasin</h1><p>Vérification & fiche de transfert</p></div>
+
+  <div id="m2-scan">
+    <div class="card">
+      <div class="card-title">🔍 Numéro du bon</div>
+      <div class="field"><label>Saisir le numéro</label><input type="text" id="scan-input" placeholder="BD-2024-0001" oninput="checkBon(this.value)" style="font-family:monospace;font-size:16px;text-transform:uppercase"></div>
+      <div id="bon-found" style="display:none">
+        <div class="banner banner-ok" id="bon-found-msg"></div>
+        <button class="btn btn-blue" onclick="startVerif()">→ Commencer la vérification</button>
+      </div>
+      <div id="bon-nf" style="display:none"><div class="banner banner-warn"><b>Bon introuvable</b>Vérifiez le numéro.</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:#888;font-size:12px">⏳ Bons en attente</div>
+      <div id="bons-list"></div>
+    </div>
+  </div>
+
+  <div id="m2-verif" style="display:none">
+    <div class="card"><div class="card-title">📋 Données du bon</div><div id="verif-data"></div></div>
+    <div class="card">
+      <div class="card-title">🔢 Comptage réel</div>
+      <div class="cmp">
+        <div class="cmp-box"><div class="cmp-lbl">Déclaré</div><div class="cmp-val" id="cmp-d">—</div><div style="font-size:11px;color:#888">colis</div></div>
+        <div class="cmp-box" id="cmp-b"><div class="cmp-lbl">Compté</div><div class="cmp-val" id="cmp-v">—</div><div style="font-size:11px;color:#888">colis</div></div>
+      </div>
+      <div class="field"><label>Sacs comptés</label><input type="number" id="comptage" placeholder="0" oninput="updCmp()"></div>
+      <div id="ecart-msg" style="display:none"></div>
+      <div class="field"><label>État marchandise</label>
+        <select id="etat"><option>Bon état</option><option>Partiellement endommagée</option><option>Mauvais état</option></select>
+      </div>
+      <div class="field"><label>Pointeur magasin</label><input type="text" id="pt-mag" placeholder="Votre nom"></div>
+      <div class="field"><label>Observations</label><textarea id="obs" rows="2" style="width:100%;background:#F5F5F0;border:1px solid #DDD;border-radius:8px;padding:10px;font-family:inherit;font-size:13px" placeholder="Remarques..."></textarea></div>
+      <button class="btn btn-green" onclick="validerVerif()">✓ Valider la réception</button>
+      <button class="btn btn-gray" onclick="cancelVerif()">Annuler</button>
+    </div>
+  </div>
+
+  <div id="m2-result" style="display:none">
+    <div id="res-banner"></div>
+    <div class="card">
+      <div class="card-title">📄 Fiche de transfert</div>
+      <div id="ft-data"></div>
+      <hr class="div">
+      <div class="card-title">✍️ Double signature</div>
+      <div class="sig-dbl">
+        <div>
+          <div class="sig-zone-lbl">Pointeur</div>
+          <div class="sig-zone done"><div class="sig-zone-val" id="sig-pt-val">—</div></div>
+        </div>
+        <div>
+          <div class="sig-zone-lbl">Magasinier</div>
+          <div class="sig-zone" id="sig-mag-zone" onclick="signMag()"><div class="sig-zone-val">Appuyer pour signer</div></div>
+        </div>
+      </div>
+      <button class="btn btn-green" id="btn-clot" onclick="cloturer()" disabled style="opacity:0.4">✓ Clôturer & mettre à jour le stock</button>
+      <button class="btn btn-red" onclick="signalerEcart()">⚠️ Signaler un écart</button>
+    </div>
+  </div>
+
+  <div id="m2-done" style="display:none">
+    <div class="banner banner-ok"><b>✓ Transfert clôturé</b>Stock mis à jour.</div>
+    <div class="card" id="done-data"></div>
+    <button class="btn btn-blue" onclick="resetM2()">+ Nouvelle réception</button>
+  </div>
+</div>
+
+<!-- MODULE 3 -->
+<div class="page" id="m3">
+  <div class="page-header"><h1>Stock magasins</h1><p id="m3-ts">—</p></div>
+  <div class="kpi-grid" id="kpi-grid"></div>
+  <div class="zone-grid" id="zone-grid"></div>
+  <div class="detail" id="detail" style="display:none"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── SUPABASE ──
+var SUPA_URL = 'https://owasfcsnudgnispqkvvx.supabase.co';
+var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im93YXNmY3NudWRnbmlzcHFrdnZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0OTYyOTUsImV4cCI6MjA5NjA3MjI5NX0.IRRzExAZzaCidYzWmQqaQaXQOjli-Wqcpyy1gKHsC10';
+var supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// ── DATA LOCAL (fallback) ──
+var db = {
+  bons: [],
+  transferts: [],
+  stock: { 'Magasin 1':{cap:0,occ:0}, 'Magasin 2':{cap:0,occ:0}, 'Magasin 3':{cap:0,occ:0}, 'Magasin 4':{cap:0,occ:0} }
+};
+
+// ── SUPABASE FUNCTIONS ──
+async function sbSaveBon(bon) {
+  try {
+    await supa.from('bons').upsert({ id: bon.id, data: bon });
+  } catch(e) { console.warn('Supabase save bon error:', e); }
+}
+
+async function sbLoadBons() {
+  try {
+    var res = await supa.from('bons').select('*').eq('data->>status', 'en_attente');
+    if (res.data) {
+      db.bons = res.data.map(function(r){ return r.data; });
+    }
+  } catch(e) { console.warn('Supabase load bons error:', e); }
+}
+
+async function sbUpdateBon(bon) {
+  try {
+    await supa.from('bons').update({ data: bon }).eq('id', bon.id);
+  } catch(e) { console.warn('Supabase update bon error:', e); }
+}
+
+async function sbLoadStock() {
+  try {
+    var res = await supa.from('stock').select('*');
+    if (res.data && res.data.length > 0) {
+      db.stock = {};
+      for (var i=0; i<res.data.length; i++) {
+        db.stock[res.data[i].magasin] = { cap: res.data[i].cap, occ: res.data[i].occ };
+      }
+    }
+  } catch(e) { console.warn('Supabase load stock error:', e); }
+}
+
+async function sbSaveStock(name, cap, occ) {
+  try {
+    await supa.from('stock').update({ cap: cap, occ: occ }).eq('magasin', name);
+  } catch(e) { console.warn('Supabase save stock error:', e); }
+}
+
+function save() {
+  try { localStorage.setItem('bm', JSON.stringify(db)); } catch(e) {}
+}
+
+// ── NAV ──
+function showPage(id) {
+  var pages = document.querySelectorAll('.page');
+  for (var i=0;i<pages.length;i++) pages[i].classList.remove('active');
+  var tabs = document.querySelectorAll('.tab');
+  for (var i=0;i<tabs.length;i++) tabs[i].classList.remove('active');
+  document.getElementById(id).classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+  if (id==='m3') renderM3();
+  if (id==='m2') renderBons();
+}
+
+function toast(msg) {
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},2500);
+}
+
+// ── MODULE 1 ──
+var shift=1, rows=[], photo=null, sigCv, sigCtx, drawing=false;
+
+function selShift(n,el) {
+  shift=n;
+  var btns=document.querySelectorAll('.shift-btn');
+  for(var i=0;i<btns.length;i++) btns[i].classList.remove('active');
+  el.classList.add('active');
+}
+
+function initDate() {
+  var d=new Date(), m=d.getMonth()+1, day=d.getDate();
+  document.getElementById('date-nav').value = d.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(day<10?'0':'')+day;
+}
+
+function addRow() {
+  rows.push({id:rows.length+1,colis:0,nature:''});
+  renderRows();
+}
+
+function renderRows() {
+  var html='';
+  for(var i=0;i<rows.length;i++) {
+    html+='<tr><td style="color:#0C2D5E;font-weight:700;font-family:monospace">'+String(rows[i].id).padStart(2,'0')+'</td>';
+    html+='<td><input type="number" value="'+rows[i].colis+'" placeholder="0" oninput="rows['+i+'].colis=+this.value;updTot()"></td>';
+    html+='<td><input type="text" value="'+rows[i].nature+'" placeholder="Riz 25kg..." oninput="rows['+i+'].nature=this.value"></td></tr>';
+  }
+  document.getElementById('ptbody').innerHTML=html;
+  updTot();
+}
+
+function updTot() {
+  var tot=0; for(var i=0;i<rows.length;i++) tot+=rows[i].colis||0;
+  document.getElementById('tot-p').textContent=rows.length;
+  document.getElementById('tot-c').textContent=tot.toLocaleString();
+}
+
+function go12() {
+  if (!document.getElementById('navire').value.trim()) { toast('Saisir le nom du navire'); return; }
+  show('s1','s2');
+  if(rows.length===0) addRow();
+}
+
+function go23() {
+  var tot=0; for(var i=0;i<rows.length;i++) tot+=rows[i].colis||0;
+  if(tot===0) { toast('Ajouter au moins une palanquée'); return; }
+  show('s2','s3');
+}
+
+function go34() {
+  if (!document.getElementById('camion').value.trim()) { toast('Saisir l\'immatriculation'); return; }
+  if (!document.getElementById('chauffeur').value.trim()) { toast('Saisir le nom du chauffeur'); return; }
+  if (!document.getElementById('dest').value) { toast('Choisir la destination'); return; }
+  show('s3','s4');
+  buildRecap();
+  initSig();
+}
+
+function show(hideId, showId) {
+  document.getElementById(hideId).style.display='none';
+  document.getElementById(showId).style.display='block';
+}
+
+function back(showId, hideId) {
+  document.getElementById(hideId).style.display='none';
+  document.getElementById(showId).style.display='block';
+}
+
+function takePhoto(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = new Image();
+    img.onload = function() {
+      var cv = document.createElement('canvas');
+      var max=600, w=img.width, h=img.height;
+      if(w>h&&w>max){h=Math.round(h*max/w);w=max;}
+      else if(h>max){w=Math.round(w*max/h);h=max;}
+      cv.width=w; cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      photo = cv.toDataURL('image/jpeg',0.65);
+      document.getElementById('ph-img').src=photo;
+      document.getElementById('ph-preview').style.display='block';
+      document.getElementById('ph-lbl').style.display='none';
+      toast('Photo ajoutée !');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function delPhoto() {
+  photo=null;
+  document.getElementById('ph-input').value='';
+  document.getElementById('ph-preview').style.display='none';
+  document.getElementById('ph-lbl').style.display='flex';
+}
+
+function buildRecap() {
+  var tot=0; for(var i=0;i<rows.length;i++) tot+=rows[i].colis||0;
+  var ph = photo ? '<img src="'+photo+'" class="photo-preview" style="margin-bottom:10px">' : '<div class="banner banner-warn" style="margin-bottom:10px"><b>Aucune photo</b>Recommandé de prendre une photo.</div>';
+  document.getElementById('recap-ch').innerHTML =
+    '<div class="card-title">📋 Vérifiez avant de signer</div>'+ph+
+    '<div class="info-row"><span class="il">Navire</span><span class="iv">'+document.getElementById('navire').value+'</span></div>'+
+    '<div class="info-row"><span class="il">Marchandise</span><span class="iv">'+document.getElementById('merch').value+'</span></div>'+
+    '<div class="info-row"><span class="il">Total colis</span><span class="iv" style="color:#0C2D5E;font-family:monospace">'+tot.toLocaleString()+'</span></div>'+
+    '<div class="info-row"><span class="il">Destination</span><span class="iv">'+document.getElementById('dest').value+'</span></div>'+
+    '<div class="info-row"><span class="il">Camion</span><span class="iv">'+document.getElementById('camion').value+'</span></div>'+
+    '<div class="info-row"><span class="il">Chauffeur</span><span class="iv">'+document.getElementById('chauffeur').value+'</span></div>';
+}
+
+function initSig() {
+  sigCv = document.getElementById('sig-cv');
+  sigCtx = sigCv.getContext('2d');
+  sigCtx.strokeStyle='#0C2D5E'; sigCtx.lineWidth=2.5; sigCtx.lineCap='round'; sigCtx.lineJoin='round';
+  sigCv.addEventListener('mousedown',function(e){drawing=true;var r=sigCv.getBoundingClientRect();sigCtx.beginPath();sigCtx.moveTo((e.clientX-r.left)*sigCv.width/r.width,(e.clientY-r.top)*sigCv.height/r.height);});
+  sigCv.addEventListener('mousemove',function(e){if(!drawing)return;var r=sigCv.getBoundingClientRect();sigCtx.lineTo((e.clientX-r.left)*sigCv.width/r.width,(e.clientY-r.top)*sigCv.height/r.height);sigCtx.stroke();});
+  sigCv.addEventListener('mouseup',function(){drawing=false;});
+  sigCv.addEventListener('touchstart',function(e){e.preventDefault();drawing=true;var r=sigCv.getBoundingClientRect(),t=e.touches[0];sigCtx.beginPath();sigCtx.moveTo((t.clientX-r.left)*sigCv.width/r.width,(t.clientY-r.top)*sigCv.height/r.height);},{passive:false});
+  sigCv.addEventListener('touchmove',function(e){e.preventDefault();if(!drawing)return;var r=sigCv.getBoundingClientRect(),t=e.touches[0];sigCtx.lineTo((t.clientX-r.left)*sigCv.width/r.width,(t.clientY-r.top)*sigCv.height/r.height);sigCtx.stroke();},{passive:false});
+  sigCv.addEventListener('touchend',function(){drawing=false;});
+}
+
+function clearSig() { if(sigCtx) sigCtx.clearRect(0,0,sigCv.width,sigCv.height); }
+
+function genId() {
+  var d=new Date(), n=String(db.bons.length+1).padStart(4,'0');
+  return 'BD-'+d.getFullYear()+'-'+n;
+}
+
+function valider() {
+  var tot=0; for(var i=0;i<rows.length;i++) tot+=rows[i].colis||0;
+  var bon={
+    id:genId(), date:new Date().toISOString(),
+    navire:document.getElementById('navire').value,
+    cale:document.getElementById('cale').value,
+    engin:document.getElementById('engin').value,
+    marque:document.getElementById('marque').value,
+    shift:shift, merch:document.getElementById('merch').value,
+    tonnage:document.getElementById('tonnage').value,
+    camion:document.getElementById('camion').value,
+    chauffeur:document.getElementById('chauffeur').value,
+    destination:document.getElementById('dest').value,
+    pointeur:document.getElementById('pt-nom').value,
+    mle:document.getElementById('pt-mle').value,
+    palanquees:rows.slice(), totalColis:tot, status:'en_attente'
+  };
+  db.bons.push(bon); save();
+  sbSaveBon(bon);
+  document.getElementById('qr-num').textContent=bon.id;
+  var url='https://yassineboutahir64.github.io/bm-app/?bon='+encodeURIComponent(bon.id);
+  makeQR('qr-display', url);
+  var ph = photo ? '<img src="'+photo+'" class="photo-preview">' : '';
+  document.getElementById('result-recap').innerHTML=
+    '<div class="card-title">Résumé</div>'+ph+
+    '<div class="info-row"><span class="il">Bon</span><span class="iv" style="font-family:monospace;color:#0C2D5E">'+bon.id+'</span></div>'+
+    '<div class="info-row"><span class="il">Navire</span><span class="iv">'+bon.navire+'</span></div>'+
+    '<div class="info-row"><span class="il">Marchandise</span><span class="iv">'+bon.merch+'</span></div>'+
+    '<div class="info-row"><span class="il">Total colis</span><span class="iv" style="font-family:monospace">'+bon.totalColis.toLocaleString()+'</span></div>'+
+    '<div class="info-row"><span class="il">Destination</span><span class="iv">'+bon.destination+'</span></div>'+
+    '<div class="info-row"><span class="il">Chauffeur</span><span class="iv">'+bon.chauffeur+' — '+bon.camion+'</span></div>';
+  show('s4','s-result');
+  toast('Bon '+bon.id+' créé !');
+}
+
+function makeQR(containerId, text) {
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  try {
+    var qr = qrcode(0, 'M');
+    qr.addData(text);
+    qr.make();
+    var mc = qr.getModuleCount();
+    var cell = Math.floor(200 / mc);
+    var size = cell * mc + 16;
+    var cv = document.createElement('canvas');
+    cv.width = size; cv.height = size;
+    cv.style.display = 'block'; cv.style.margin = '0 auto'; cv.style.borderRadius = '8px';
+    var ctx = cv.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, size, size);
+    ctx.fillStyle = '#0C2D5E';
+    for (var r = 0; r < mc; r++)
+      for (var c = 0; c < mc; c++)
+        if (qr.isDark(r, c))
+          ctx.fillRect(8 + c * cell, 8 + r * cell, cell, cell);
+    el.innerHTML = ''; el.appendChild(cv);
+  } catch(e) {
+    var num = text.indexOf('?bon=') >= 0 ? text.split('?bon=')[1] : text;
+    el.innerHTML = '<div style="background:#E6F1FB;border-radius:8px;padding:20px;text-align:center"><div style="font-size:11px;color:#888;margin-bottom:8px">Montrer ce numéro au pointeur magasin</div><div style="font-family:monospace;font-size:26px;font-weight:700;color:#0C2D5E;letter-spacing:3px">' + num + '</div></div>';
+  }
+}
+
+
+function resetM1() {
+  rows=[]; photo=null; shift=1;
+  ['navire','cale','engin','marque','camion','chauffeur','tonnage','pt-nom','pt-mle'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('dest').selectedIndex=0;
+  document.getElementById('merch').selectedIndex=0;
+  document.getElementById('ph-input').value='';
+  document.getElementById('ph-preview').style.display='none';
+  document.getElementById('ph-lbl').style.display='flex';
+  var btns=document.querySelectorAll('.shift-btn');
+  for(var i=0;i<btns.length;i++) btns[i].classList.toggle('active',i===0);
+  document.getElementById('s-result').style.display='none';
+  document.getElementById('s1').style.display='block';
+  initDate();
+}
+
+// ── MODULE 2 ──
+var curBon=null, magSigned=false;
+
+function renderBons() {
+  document.getElementById('bons-list').innerHTML='<div style="font-size:13px;color:#888;text-align:center;padding:12px">Chargement...</div>';
+  sbLoadBons().then(function() {
+    var pending=db.bons.filter(function(b){return b.status==='en_attente';});
+    var html='';
+    if(pending.length===0) html='<div style="font-size:13px;color:#888;text-align:center;padding:12px">Aucun bon en attente</div>';
+    for(var i=0;i<pending.length;i++) {
+      var b=pending[i];
+      html+='<div class="bon-item" onclick="selectBon(\''+b.id+'\')"><div class="bon-item-id">'+b.id+'</div><div class="bon-item-sub">'+b.navire+' — '+b.merch+' — '+b.destination+'</div></div>';
+    }
+    document.getElementById('bons-list').innerHTML=html;
+  });
+}
+
+function selectBon(id) {
+  document.getElementById('scan-input').value=id;
+  checkBon(id);
+}
+
+function checkBon(val) {
+  var v=val.trim().toUpperCase();
+  if(v.length<5){document.getElementById('bon-found').style.display='none';document.getElementById('bon-nf').style.display='none';return;}
+  document.getElementById('bon-found').style.display='none';
+  document.getElementById('bon-nf').style.display='none';
+  // Chercher dans Supabase
+  supa.from('bons').select('*').eq('id', v).then(function(res) {
+    var bon = null;
+    if (res.data && res.data.length > 0) {
+      var d = res.data[0].data;
+      if (d && d.status === 'en_attente') bon = d;
+    }
+    if(bon){
+      curBon = bon;
+      document.getElementById('bon-found-msg').innerHTML='<b>✓ Bon trouvé : '+bon.id+'</b><br>'+bon.navire+' — '+bon.merch+' — '+bon.totalColis.toLocaleString()+' colis';
+      document.getElementById('bon-found').style.display='block';
+      document.getElementById('bon-nf').style.display='none';
+    } else {
+      curBon = null;
+      document.getElementById('bon-found').style.display='none';
+      document.getElementById('bon-nf').style.display='block';
+    }
+  }).catch(function(e) {
+    console.warn('checkBon error:', e);
+    document.getElementById('bon-nf').style.display='block';
+  });
+}
+
+function startVerif() {
+  if(!curBon)return;
+  document.getElementById('m2-scan').style.display='none';
+  document.getElementById('m2-verif').style.display='block';
+  document.getElementById('cmp-d').textContent=curBon.totalColis.toLocaleString();
+  var ph=curBon.photo?'<img src="'+curBon.photo+'" class="photo-preview">':'';
+  document.getElementById('verif-data').innerHTML=ph+
+    '<div class="info-row"><span class="il">Bon</span><span class="iv" style="font-family:monospace;color:#0C2D5E">'+curBon.id+'</span></div>'+
+    '<div class="info-row"><span class="il">Navire</span><span class="iv">'+curBon.navire+'</span></div>'+
+    '<div class="info-row"><span class="il">Marchandise</span><span class="iv">'+curBon.merch+'</span></div>'+
+    '<div class="info-row"><span class="il">Tonnage</span><span class="iv">'+curBon.tonnage+' t</span></div>'+
+    '<div class="info-row"><span class="il">Camion</span><span class="iv">'+curBon.camion+'</span></div>'+
+    '<div class="info-row"><span class="il">Chauffeur</span><span class="iv">'+curBon.chauffeur+'</span></div>'+
+    '<div class="info-row"><span class="il">Destination</span><span class="iv">'+curBon.destination+'</span></div>';
+  document.getElementById('comptage').value='';
+  document.getElementById('cmp-v').textContent='—';
+  document.getElementById('cmp-b').className='cmp-box';
+  document.getElementById('ecart-msg').style.display='none';
+}
+
+function updCmp() {
+  var v=+document.getElementById('comptage').value||0;
+  var dec=curBon.totalColis, diff=v-dec;
+  document.getElementById('cmp-v').textContent=v>0?v.toLocaleString():'—';
+  var box=document.getElementById('cmp-b'), msg=document.getElementById('ecart-msg');
+  if(v<=0){box.className='cmp-box';msg.style.display='none';return;}
+  if(diff===0){
+    box.className='cmp-box ok';
+    msg.style.display='block';
+    msg.innerHTML='<div class="banner banner-ok"><b>✓ Conforme</b>Aucun écart détecté.</div>';
+  } else {
+    box.className='cmp-box err';
+    msg.style.display='block';
+    msg.innerHTML='<div class="banner banner-err"><b>⚠️ Écart : '+(diff>0?'+':'')+diff+' colis</b>Un rapport sera envoyé au chef magasinier.</div>';
+  }
+}
+
+function validerVerif() {
+  if(!curBon){toast('Erreur : bon non chargé, réessayez');return;}
+  var cpt=+document.getElementById('comptage').value;
+  var ptm=document.getElementById('pt-mag').value.trim();
+  if(!cpt||cpt<=0){toast('Saisir le nombre de colis comptés');return;}
+  if(!ptm){toast('Saisir le nom du pointeur magasin');return;}
+  try {
+    var diff=cpt-curBon.totalColis;
+    var ft={
+      id:'FT-'+curBon.id.replace('BD-',''),
+      bonId:curBon.id,
+      date:new Date().toISOString(),
+      navire:curBon.navire,
+      merch:curBon.merch,
+      camion:curBon.camion,
+      origine:'Quai',
+      destination:curBon.destination,
+      pointeurQuai:curBon.pointeur,
+      pointeurMag:ptm,
+      decare:curBon.totalColis,
+      comptes:cpt,
+      ecart:diff,
+      etat:document.getElementById('etat').value,
+      obs:document.getElementById('obs').value,
+      status:'en_attente_sig'
+    };
+    if(!db.transferts) db.transferts=[];
+    db.transferts.push(ft);
+    curBon.status='en_cours';
+    save();
+    magSigned=false;
+    document.getElementById('m2-verif').style.display='none';
+    document.getElementById('m2-result').style.display='block';
+    document.getElementById('sig-pt-val').textContent='✓ '+ptm;
+    var banner=diff===0
+      ?'<div class="banner banner-ok"><b>✓ Marchandise conforme</b>Déchargement autorisé.</div>'
+      :'<div class="banner banner-err"><b>⚠️ Écart de '+Math.abs(diff)+' colis</b>Rapport envoyé au chef magasinier.</div>';
+    document.getElementById('res-banner').innerHTML=banner;
+    document.getElementById('ft-data').innerHTML=
+      '<div class="info-row"><span class="il">Fiche</span><span class="iv" style="font-family:monospace">'+ft.id+'</span></div>'+
+      '<div class="info-row"><span class="il">Bon lié</span><span class="iv" style="font-family:monospace;color:#0C2D5E">'+ft.bonId+'</span></div>'+
+      '<div class="info-row"><span class="il">Origine → Dest.</span><span class="iv">'+ft.origine+' → '+ft.destination+'</span></div>'+
+      '<div class="info-row"><span class="il">Marchandise</span><span class="iv">'+ft.merch+'</span></div>'+
+      '<div class="info-row"><span class="il">Déclaré</span><span class="iv" style="font-family:monospace">'+ft.decare.toLocaleString()+'</span></div>'+
+      '<div class="info-row"><span class="il">Compté</span><span class="iv" style="font-family:monospace;color:'+(diff===0?'#085041':'#A32D2D')+'">'+ft.comptes.toLocaleString()+'</span></div>'+
+      '<div class="info-row"><span class="il">Camion</span><span class="iv">'+ft.camion+'</span></div>';
+    var btn=document.getElementById('btn-clot');
+    btn.disabled=true; btn.style.opacity='0.4';
+  } catch(e) {
+    toast('Erreur : '+e.message);
+    console.error('validerVerif error:', e);
+  }
+}
+
+function signMag() {
+  var nom=prompt('Nom du magasinier :');
+  if(!nom)return;
+  magSigned=true;
+  var z=document.getElementById('sig-mag-zone');
+  z.className='sig-zone done';
+  z.innerHTML='<div class="sig-zone-val">✓ '+nom+'</div>';
+  var btn=document.getElementById('btn-clot'); btn.disabled=false; btn.style.opacity='1';
+}
+
+function cloturer() {
+  if(!magSigned)return;
+  var ft=db.transferts[db.transferts.length-1];
+  ft.status='cloture'; curBon.status='traite';
+  if(db.stock[ft.destination]) db.stock[ft.destination].occ=Math.min(db.stock[ft.destination].occ+ft.comptes,db.stock[ft.destination].cap);
+  save();
+  sbUpdateBon(curBon);
+  sbSaveStock(ft.destination, db.stock[ft.destination].cap, db.stock[ft.destination].occ);
+  document.getElementById('m2-result').style.display='none';
+  document.getElementById('m2-done').style.display='block';
+  document.getElementById('done-data').innerHTML=
+    '<div class="card-title">✓ Transfert clôturé</div>'+
+    '<div class="info-row"><span class="il">Fiche</span><span class="iv" style="font-family:monospace">'+ft.id+'</span></div>'+
+    '<div class="info-row"><span class="il">Magasin</span><span class="iv">'+ft.destination+'</span></div>'+
+    '<div class="info-row"><span class="il">Colis transférés</span><span class="iv" style="font-family:monospace;color:#085041">'+ft.comptes.toLocaleString()+'</span></div>'+
+    '<div class="info-row"><span class="il">Stock mis à jour</span><span class="iv" style="color:#085041">✓ Oui</span></div>';
+  toast('Stock '+ft.destination+' mis à jour !');
+}
+
+function signalerEcart() { toast('Rapport envoyé au chef magasinier'); }
+function cancelVerif() { document.getElementById('m2-verif').style.display='none'; document.getElementById('m2-scan').style.display='block'; renderBons(); }
+function resetM2() {
+  curBon=null; magSigned=false;
+  document.getElementById('scan-input').value='';
+  document.getElementById('bon-found').style.display='none';
+  document.getElementById('bon-nf').style.display='none';
+  document.getElementById('m2-done').style.display='none';
+  document.getElementById('m2-scan').style.display='block';
+  renderBons();
+}
+
+// ── MODULE 3 ──
+function col(p) { return p>=100?'#A32D2D':p>=80?'#FF9800':'#1D9E75'; }
+function badge(p) { return p>=100?'badge-err':p>=80?'badge-warn':'badge-ok'; }
+function badgeLbl(p) { return p>=100?'Saturé':p>=80?'Attention':'OK'; }
+
+function renderM3() {
+  var now=new Date(), h=now.getHours(), m=now.getMinutes();
+  document.getElementById('m3-ts').textContent='Mis à jour : '+(h<10?'0':'')+h+':'+(m<10?'0':'')+m;
+  var mags=Object.keys(db.stock), totalCap=0, totalOcc=0, alerts=0;
+  for(var i=0;i<mags.length;i++){totalCap+=db.stock[mags[i]].cap;totalOcc+=db.stock[mags[i]].occ;}
+  var rate=totalCap>0?Math.round(totalOcc/totalCap*100):0;
+  for(var i=0;i<mags.length;i++){var p=Math.round(db.stock[mags[i]].occ/db.stock[mags[i]].cap*100);if(p>=80)alerts++;}
+  document.getElementById('kpi-grid').innerHTML=
+    '<div class="kpi"><div class="kpi-lbl">Capacité totale</div><div class="kpi-val">'+Math.round(totalCap/1000)+'k</div><div class="kpi-sub">tonnes</div></div>'+
+    '<div class="kpi"><div class="kpi-lbl">Stock occupé</div><div class="kpi-val">'+Math.round(totalOcc/1000)+'k</div><div class="kpi-sub">tonnes</div></div>'+
+    '<div class="kpi"><div class="kpi-lbl">Taux global</div><div class="kpi-val" style="color:'+col(rate)+'">'+rate+'%</div><div class="kpi-sub">remplissage</div></div>'+
+    '<div class="kpi"><div class="kpi-lbl">Alertes</div><div class="kpi-val" style="color:'+(alerts>0?'#A32D2D':'#1a1a1a')+'">'+alerts+'</div><div class="kpi-sub">magasins ≥ 80%</div></div>';
+  var zhtml='';
+  for(var i=0;i<mags.length;i++){
+    var n=mags[i], v=db.stock[n], p=Math.min(Math.round(v.occ/v.cap*100),100);
+    zhtml+='<div class="zone-card" onclick="selMag(\''+n+'\')"><div class="zone-name">'+n+' <span class="badge '+badge(p)+'">'+badgeLbl(p)+'</span></div><div class="zone-bar"><div class="zone-fill" style="width:'+p+'%;background:'+col(p)+'"></div></div><div class="zone-pct" style="color:'+col(p)+'">'+p+'%</div><div style="font-size:11px;color:#888;margin-top:3px">'+v.occ.toLocaleString()+' / '+v.cap.toLocaleString()+' t</div></div>';
+  }
+  document.getElementById('zone-grid').innerHTML=zhtml;
+  document.getElementById('detail').style.display='none';
+}
+
+function selMag(name) {
+  var v=db.stock[name], p=Math.min(Math.round(v.occ/v.cap*100),100);
+  var d=document.getElementById('detail');
+  d.style.display='block';
+  d.innerHTML=
+    '<div style="font-size:15px;font-weight:700;margin-bottom:12px">'+name+' <span class="badge '+badge(p)+'">'+badgeLbl(p)+'</span></div>'+
+    '<div class="info-row"><span class="il">Capacité</span><span class="iv" style="font-family:monospace">'+v.cap.toLocaleString()+' t</span></div>'+
+    '<div class="info-row"><span class="il">Occupé</span><span class="iv" style="font-family:monospace">'+v.occ.toLocaleString()+' t</span></div>'+
+    '<div class="info-row"><span class="il">Disponible</span><span class="iv" style="font-family:monospace;color:#085041">'+Math.max(v.cap-v.occ,0).toLocaleString()+' t</span></div>'+
+    '<div class="zone-bar" style="height:8px;margin:12px 0"><div class="zone-fill" style="width:'+p+'%;background:'+col(p)+'"></div></div>'+
+    '<hr class="div">'+
+    '<div style="font-size:12px;font-weight:700;color:#888;margin-bottom:8px;text-transform:uppercase">Modifier manuellement</div>'+
+    '<div class="row2">'+
+    '<div class="field"><label>Stock actuel (t)</label><input type="number" id="e-occ" value="'+v.occ+'" min="0"></div>'+
+    '<div class="field"><label>Capacité (t)</label><input type="number" id="e-cap" value="'+v.cap+'" min="1"></div>'+
+    '</div>'+
+    '<button class="btn btn-blue" onclick="saveMag(\''+name+'\')">💾 Enregistrer</button>';
+}
+
+function saveMag(name) {
+  var occ=parseInt(document.getElementById('e-occ').value)||0;
+  var cap=parseInt(document.getElementById('e-cap').value)||1;
+  if(occ<0){toast('Stock ne peut pas être négatif');return;}
+  db.stock[name].occ=occ; db.stock[name].cap=cap; save();
+  sbSaveStock(name, cap, occ).then(function(){ toast(name+' mis à jour !'); renderM3(); });
+}
+
+// ── INIT ──
+window.addEventListener('load', function() {
+  initDate();
+  addRow();
+  // Charger le stock depuis Supabase
+  sbLoadStock().then(function() {
+    renderM3();
+  });
+  try {
+    var params=new URLSearchParams(window.location.search);
+    var bonId=params.get('bon');
+    if(bonId){
+      showPage('m2');
+      document.getElementById('scan-input').value=bonId.toUpperCase();
+      checkBon(bonId.toUpperCase());
+      toast('Bon '+bonId+' chargé !');
+    }
+  } catch(e) {}
+});
+</script>
+</body>
+</html>
